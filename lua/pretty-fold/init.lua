@@ -9,6 +9,11 @@ ffi.cdef([[
   extern win_T *curwin;
 ]])
 
+---@diagnostic disable-next-line: unused-local, unused-function
+local function curwin_col_off()
+  return ffi.C.win_col_off(ffi.C.curwin)
+end
+
 local M = {
   foldtext = {}, -- Table with all 'foldtext' functions.
   ft_ignore = {}, -- Set with filetypes to be ignored.
