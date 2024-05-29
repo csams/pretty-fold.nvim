@@ -90,12 +90,18 @@ local function fold_text(config)
 
    local visible_win_width = api.nvim_win_get_width(0) - gutter_width
 
-   -- The summation length of all components of the fold text string.
-   local fold_text_len = fn.strdisplaywidth( table.concat( vim.tbl_flatten( vim.tbl_values(r) )))
+  -- The summation length of all components of the fold text string.
+  local fold_text_len = fn.strdisplaywidth(
+    table.concat(vim.iter(vim.tbl_values(r)):flatten():totable())
+  )
 
-   r.expansion_str = string.rep(config.fill_char, visible_win_width - fold_text_len)
+  local expansion_repetitions = (visible_win_width - fold_text_len)
+    / fn.strdisplaywidth(config.fill_char)
+  r.expansion_str = string.rep(config.fill_char, expansion_repetitions)
 
-   return table.concat( vim.tbl_flatten({r.left, r.expansion_str, r.right}) )
+  return table.concat(
+    vim.iter({ r.left, r.expansion_str, r.right }):flatten():totable()
+  )
 end
 
 ---Make a ready to use config table with all keys for all foldmethos from the
