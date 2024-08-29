@@ -66,7 +66,7 @@ function M.content(config)
          -- 'test( -- comment'     ->  '-- comment'
          table.insert(
             cache.regex.all_comment_tokens_at_start,
-            vim.regex(table.concat{ [[\M^\%(\s\*]], token, [[\s\*\)\*]] })
+            vim.regex(table.concat { [[\M^\%(\s\*]], token, [[\s\*\)\*]] })
          )
       end
    end
@@ -89,29 +89,28 @@ function M.content(config)
 
          table.insert(
             cache.lua_patterns.str_with_only_comment_token,
-            table.concat{ '^%s*', token, '%s*$' }
+            table.concat { '^%s*', token, '%s*$' }
          )
          table.insert(
             cache.lua_patterns.comment_token_at_start,
-            table.concat{ '^', token, '%s*' }
+            table.concat { '^', token, '%s*' }
          )
          table.insert(
             cache.lua_patterns.comment_token_at_eol,
-            table.concat{ '%s*', token, '%s*$' }
+            table.concat { '%s*', token, '%s*$' }
          )
          table.insert(
             cache.lua_patterns.comment_substring_at_eol,
-            table.concat{ '%s*', token, '.*$' }
+            table.concat { '%s*', token, '.*$' }
          )
       end
-
    end
 
    -- if vim.wo.foldmethod == 'marker' and config.remove_fold_markers then
    if config.remove_fold_markers then
       local fmr = vim.opt.foldmarker:get()[1]
       if not cache.lua_patterns[fmr] then
-         cache.lua_patterns[fmr] = table.concat{ '%s?', vim.pesc(fmr), '%d*' }
+         cache.lua_patterns[fmr] = table.concat { '%s?', vim.pesc(fmr), '%d*' }
       end
       content = content:gsub(cache.lua_patterns[fmr], '')
 
@@ -160,8 +159,8 @@ function M.content(config)
    end
 
    -- Add matchup pattern
-   if type(config.add_close_pattern) == "boolean"  -- Add matchup pattern
-      and config.add_close_pattern
+   if type(config.add_close_pattern) == "boolean" -- Add matchup pattern
+       and config.add_close_pattern
    then
       local str = content
       local found_patterns = {}
@@ -172,8 +171,12 @@ function M.content(config)
          while stop do
             start, stop = str:find(pat[1], stop + 1)
             if start then
-               table.insert(found, { start = start, stop = stop,
-                                     pat = pat[1], oppening = true })
+               table.insert(found, {
+                  start = start,
+                  stop = stop,
+                  pat = pat[1],
+                  oppening = true
+               })
             end
          end
 
@@ -185,14 +188,18 @@ function M.content(config)
             }
          end
 
-         local num_op = #found  -- number of opening patterns
+         local num_op = #found -- number of opening patterns
          if num_op > 0 then
             start, stop = nil, 0
             while stop do
                start, stop = str:find(vim.pesc(pat[2]), stop + 1)
                if start then
-                  table.insert(found, { start = start, stop = stop,
-                                        pat = pat[2], oppening = false })
+                  table.insert(found, {
+                     start = start,
+                     stop = stop,
+                     pat = pat[2],
+                     oppening = false
+                  })
                end
                -- If number of closing patterns become equal to number of openning
                -- patterns, then break.
@@ -213,7 +220,7 @@ function M.content(config)
                   table.remove(found, c)
                   if p then
                      c, n = p, c
-                     p = p > 1 and p-1 or nil
+                     p = p > 1 and p - 1 or nil
                   end
                else
                   c, n = c + 1, n + 1
@@ -292,9 +299,7 @@ function M.content(config)
          for _, b in ipairs(brackets) do
             content = content:gsub(b[1], b[2])
          end
-
       end
-
    elseif config.add_close_pattern == 'last_line' then
       local last_line = fn.getline(v.foldend)
 
@@ -304,13 +309,12 @@ function M.content(config)
 
       last_line = vim.trim(last_line)
       for _, p in ipairs(config.matchup_patterns) do
-         if content:find( p[1] ) and last_line:find( p[2] ) then
-
+         if content:find(p[1]) and last_line:find(p[2]) then
             local ellipsis = (#p[2] == 1) and '...' or ' ... '
 
             local closing_comment_str = ''
             for _, c in ipairs(comment_tokens.escaped) do
-               local c_start = content:find(table.concat{'%s*', c[1] or c, '.*$'})
+               local c_start = content:find(table.concat { '%s*', c[1] or c, '.*$' })
 
                if c_start then
                   closing_comment_str = content:sub(c_start)
@@ -319,7 +323,7 @@ function M.content(config)
                end
             end
 
-            content = table.concat{ content, ellipsis, last_line, closing_comment_str }
+            content = table.concat { content, ellipsis, last_line, closing_comment_str }
             break
          end
       end
@@ -327,12 +331,12 @@ function M.content(config)
 
    -- Process comment signs
    if config.process_comment_signs == 'spaces' then
-      local raw_token = vim.tbl_flatten(comment_tokens.raw)
-      for i, token in ipairs(vim.tbl_flatten( comment_tokens.escaped )) do
+      local raw_token = vim.iter(vim.tbl_values(comment_tokens.raw)):flatten():totable()
+      for i, token in ipairs(vim.iter(vim.tbl_values(comment_tokens.escaped)):flatten():totable()) do
          content = content:gsub(token, string.rep(' ', #raw_token[i]))
       end
    elseif config.process_comment_signs == 'delete' then
-      for _, sign in ipairs(vim.tbl_flatten( comment_tokens.escaped )) do
+      for _, sign in ipairs(vim.iter(vim.tbl_values(comment_tokens.escaped)):flatten():totable()) do
          content = content:gsub(sign, '')
       end
    end
@@ -345,7 +349,7 @@ function M.content(config)
       if opening_blank_substr then
          content = content:gsub(
             opening_blank_substr,
-            config.fill_char:rep(#opening_blank_substr - 1)..' ',
+            config.fill_char:rep(#opening_blank_substr - 1) .. ' ',
             -- config.fill_char:rep(fn.strdisplaywidth(opening_blank_substr) - 1)..' ',
             1)
       end
@@ -356,7 +360,7 @@ function M.content(config)
    end
 
    content = content:gsub('%s*$', '')
-   content = content..' '
+   content = content .. ' '
 
    -- Exchange all occurrences of multiple spaces inside the text with
    -- 'fill_char', like this:
@@ -364,7 +368,7 @@ function M.content(config)
    for blank_substr in content:gmatch('%s%s%s+') do
       content = content:gsub(
          blank_substr,
-         ' '..string.rep(config.fill_char, #blank_substr - 2)..' ',
+         ' ' .. string.rep(config.fill_char, #blank_substr - 2) .. ' ',
          1)
    end
 
@@ -378,13 +382,13 @@ end
 
 ---@return string
 function M.percentage()
-   local folded_lines = v.foldend - v.foldstart + 1  -- The number of folded lines.
+   local folded_lines = v.foldend - v.foldstart + 1 -- The number of folded lines.
    local total_lines = vim.api.nvim_buf_line_count(0)
    local pnum = math.floor(100 * folded_lines / total_lines)
    if pnum == 0 then
       pnum = tostring(100 * folded_lines / total_lines):sub(2, 3)
    elseif pnum < 10 then
-      pnum = ' '..pnum
+      pnum = ' ' .. pnum
    end
    return pnum .. '%'
 end
